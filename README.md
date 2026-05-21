@@ -79,17 +79,35 @@ The API is exposed at `http://localhost:8000`, and PostgreSQL with pgvector is e
 ## Tests
 
 ```powershell
-pytest
+python -m pytest
 ```
 
-Current tests cover the FastAPI health endpoint and database configuration behavior.
+Current tests cover the FastAPI health endpoint, database configuration, chunking, and chunk metadata creation.
+
+## Ingestion
+
+Put source PDFs in `data/raw`, start PostgreSQL, then run:
+
+```powershell
+python scripts/ingest.py --path data/raw
+```
+
+The ingestion pipeline:
+
+- Loads PDFs with PyMuPDF.
+- Extracts document metadata and page-level text.
+- Creates heading-aware chunks with page spans and token counts.
+- Preserves chunk metadata including `document_id`, `source_file`, `page_start`, `page_end`, `section_title`, `chunk_index`, and `token_count`.
+- Generates embeddings through the pluggable `EmbeddingProvider` interface.
+- Stores documents, chunks, metadata, and embeddings in PostgreSQL with pgvector.
+
+The default embedding provider is a placeholder zero-vector provider so the skeleton remains runnable before a real embedding service is configured.
 
 ## Next Implementation Steps
 
 - Add Alembic migrations from `app/db/models.py`.
-- Replace PDF ingestion placeholders with a production parser.
-- Implement structure-aware chunking for headings, tables, and page references.
-- Wire the embedding provider to a real model.
+- Add a real embedding provider implementation.
+- Expand structure-aware chunking for tables and page references.
 - Implement pgvector similarity retrieval.
 - Convert `app/agents/workflow.py` placeholders into a compiled LangGraph graph.
 - Add RAGAS datasets and TruLens instrumentation.

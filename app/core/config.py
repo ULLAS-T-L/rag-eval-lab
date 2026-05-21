@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     )
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     embedding_model: str = Field(default="text-embedding-3-small", alias="EMBEDDING_MODEL")
+    embedding_dimensions: int = Field(default=1536, alias="EMBEDDING_DIMENSIONS")
     llm_model: str = Field(default="gpt-4.1-mini", alias="LLM_MODEL")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
