@@ -20,8 +20,10 @@ class IngestionStore:
         self.embedding_provider = embedding_provider
 
     def initialize_schema(self) -> None:
-        self.session.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-        Base.metadata.create_all(bind=self.session.get_bind())
+        connection = self.session.connection()
+        connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        connection.execute(text("SET search_path TO public, extensions"))
+        Base.metadata.create_all(bind=connection)
         self.session.commit()
 
     def upsert_document(self, raw_document: RawDocument) -> Document:

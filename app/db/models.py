@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
@@ -26,8 +26,8 @@ class Document(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     source_uri: Mapped[str] = mapped_column(String(1024), nullable=False)
-    title: Mapped[str | None] = mapped_column(String(512))
-    checksum: Mapped[str | None] = mapped_column(String(128), unique=True)
+    title: Mapped[Optional[str]] = mapped_column(String(512))
+    checksum: Mapped[Optional[str]] = mapped_column(String(128), unique=True)
     doc_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
     chunks: Mapped[list["Chunk"]] = relationship(back_populates="document")
@@ -40,8 +40,8 @@ class Chunk(TimestampMixin, Base):
     document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
-    section_path: Mapped[str | None] = mapped_column(String(1024))
-    token_count: Mapped[int | None] = mapped_column(Integer)
+    section_path: Mapped[Optional[str]] = mapped_column(String(1024))
+    token_count: Mapped[Optional[int]] = mapped_column(Integer)
     chunk_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
     document: Mapped[Document] = relationship(back_populates="chunks")
@@ -68,14 +68,14 @@ class RetrievalLog(TimestampMixin, Base):
     retriever_name: Mapped[str] = mapped_column(String(255), nullable=False)
     retrieved_chunk_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     scores: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
-    latency_ms: Mapped[int | None] = mapped_column(Integer)
+    latency_ms: Mapped[Optional[int]] = mapped_column(Integer)
 
 
 class AnswerLog(TimestampMixin, Base):
     __tablename__ = "answer_logs"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    retrieval_log_id: Mapped[str | None] = mapped_column(ForeignKey("retrieval_logs.id"))
+    retrieval_log_id: Mapped[Optional[str]] = mapped_column(ForeignKey("retrieval_logs.id"))
     question: Mapped[str] = mapped_column(Text, nullable=False)
     answer: Mapped[str] = mapped_column(Text, nullable=False)
     model: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -87,10 +87,10 @@ class EvaluationScore(TimestampMixin, Base):
     __tablename__ = "evaluation_scores"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    answer_log_id: Mapped[str | None] = mapped_column(ForeignKey("answer_logs.id"))
+    answer_log_id: Mapped[Optional[str]] = mapped_column(ForeignKey("answer_logs.id"))
     evaluator: Mapped[str] = mapped_column(String(255), nullable=False)
     metric_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    score: Mapped[int | None] = mapped_column(Integer)
+    score: Mapped[Optional[int]] = mapped_column(Integer)
     details: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
@@ -98,8 +98,8 @@ class HumanReviewDecision(TimestampMixin, Base):
     __tablename__ = "human_review_decisions"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    answer_log_id: Mapped[str | None] = mapped_column(ForeignKey("answer_logs.id"))
-    reviewer: Mapped[str | None] = mapped_column(String(255))
+    answer_log_id: Mapped[Optional[str]] = mapped_column(ForeignKey("answer_logs.id"))
+    reviewer: Mapped[Optional[str]] = mapped_column(String(255))
     decision: Mapped[str] = mapped_column(String(64), nullable=False)
-    rationale: Mapped[str | None] = mapped_column(Text)
+    rationale: Mapped[Optional[str]] = mapped_column(Text)
     review_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
