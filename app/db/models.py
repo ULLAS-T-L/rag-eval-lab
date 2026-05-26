@@ -68,6 +68,7 @@ class RetrievalLog(TimestampMixin, Base):
     retriever_name: Mapped[str] = mapped_column(String(255), nullable=False)
     retrieved_chunk_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     scores: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    top_k: Mapped[Optional[int]] = mapped_column(Integer)
     latency_ms: Mapped[Optional[int]] = mapped_column(Integer)
 
 

@@ -101,7 +101,26 @@ The ingestion pipeline:
 - Generates embeddings through the pluggable `EmbeddingProvider` interface.
 - Stores documents, chunks, metadata, and embeddings in PostgreSQL with pgvector.
 
-The default embedding provider is a placeholder zero-vector provider so the skeleton remains runnable before a real embedding service is configured.
+The default embedding provider is a deterministic placeholder provider so the skeleton remains runnable before a real embedding service is configured.
+
+## Retrieval
+
+Run a direct retrieval benchmark against the configured database:
+
+```powershell
+python scripts/test_retrieval.py
+```
+
+The API also exposes vector retrieval:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/query/retrieve `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{"query":"annual revenue risk factors","top_k":5}'
+```
+
+Retrieval supports pgvector cosine similarity, metadata filters for `document_id`, `source_file`, `page`, and `section_title`, a no-op reranker interface, and retrieval logging in `retrieval_logs`.
 
 ## Next Implementation Steps
 
