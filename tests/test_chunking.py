@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from app.ingestion.chunking import StructureAwareChunker
+from app.ingestion.pdf import PDFIngestionPipeline
 from app.ingestion.pdf import ParsedPage
 
 
@@ -45,3 +48,10 @@ def test_empty_pages_create_no_chunks() -> None:
         source_file="empty.pdf",
     )
     assert chunks == []
+
+
+def test_pdf_metadata_infers_company_and_document_type() -> None:
+    metadata = PDFIngestionPipeline()._infer_document_metadata(Path("apple_10k.pdf"))
+
+    assert metadata["company"] == "Apple"
+    assert metadata["document_type"] == "10-K"

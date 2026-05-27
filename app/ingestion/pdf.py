@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Any
 
 
@@ -42,8 +43,10 @@ class PDFIngestionPipeline:
 
         with fitz.open(path) as document:
             metadata = dict(document.metadata or {})
+            inferred_metadata = self._infer_document_metadata(path)
             metadata.update(
                 {
+                    **inferred_metadata,
                     "source_file": path.name,
                     "source_path": str(path),
                     "page_count": document.page_count,
@@ -63,3 +66,19 @@ class PDFIngestionPipeline:
             ]
 
         return RawDocument(source_path=path, pages=pages, metadata=metadata)
+
+    def _infer_document_metadata(self, path: Path) -> dict[str, Any]:
+        filename = path.name.lower()
+        company_map = {
+            "apple": "Apple",
+            "microsoft": "Microsoft",
+            "amazon": "Amazon",
+        }
+        company = next((value for key, value in company_map.items() if key in filename), None)
+        year_match = re.search(r"\b(20\d{2})\b", filename)
+        document_type = "10-K" if "10k" in filename.replace("-", "").replace("_", "") else None
+        return {
+            "company": company,
+            "year": int(year_match.group(1)) if year_match else None,
+            "document_type": document_type,
+        }

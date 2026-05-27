@@ -122,12 +122,49 @@ Invoke-RestMethod http://localhost:8000/query/retrieve `
 
 Retrieval supports pgvector cosine similarity, metadata filters for `document_id`, `source_file`, `page`, and `section_title`, a no-op reranker interface, and retrieval logging in `retrieval_logs`.
 
+Company and source-file filters are applied before vector ranking. For example, `company = "Apple"` first restricts candidate rows to Apple documents through `documents.company`; if that column is not populated yet, retrieval falls back to matching Apple in `documents.source_file` and chunk source-file metadata. pgvector cosine similarity is then computed only over the filtered candidate chunks.
+
+## Online Query Flow
+
+The online query pipeline is exposed at:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/query/ask `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{
+    "query":"What supply chain risks did Apple mention?",
+    "top_k":5,
+    "filters":{
+      "source_file":null,
+      "company":"Apple",
+      "year":null,
+      "section_title":null,
+      "page_start":null,
+      "page_end":null
+    }
+  }'
+```
+
+Flow:
+
+1. The planner analyzes the query and merges explicit filters with inferred filters such as company, source file, year, or section.
+2. The router chooses `vector_only`, `metadata_then_vector`, or `insufficient_query`.
+3. For `metadata_then_vector`, SQL predicates restrict eligible documents and chunks first, then pgvector cosine similarity ranks only those rows.
+4. The grounded answer generator answers only from retrieved chunk text and returns citations from retrieved metadata.
+5. The answer is logged to `answer_logs` with retrieved chunk IDs, applied filters, retrieval strategy, citations, and latency.
+
+Retrieval, generation, and evaluation are separate responsibilities:
+
+- Retrieval finds and ranks evidence chunks using metadata filters and vector search.
+- Generation turns retrieved evidence into a grounded answer with citations and no outside knowledge.
+- Evaluation is a later offline/online quality layer for RAGAS, TruLens, and review workflows; it is not implemented in this step.
+
 ## Next Implementation Steps
 
 - Add Alembic migrations from `app/db/models.py`.
 - Add a real embedding provider implementation.
 - Expand structure-aware chunking for tables and page references.
-- Implement pgvector similarity retrieval.
 - Convert `app/agents/workflow.py` placeholders into a compiled LangGraph graph.
 - Add RAGAS datasets and TruLens instrumentation.
 - Expand red-team scenarios into automated regression tests.

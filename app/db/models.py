@@ -26,6 +26,10 @@ class Document(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     source_uri: Mapped[str] = mapped_column(String(1024), nullable=False)
+    source_file: Mapped[Optional[str]] = mapped_column(String(512))
+    company: Mapped[Optional[str]] = mapped_column(String(255))
+    year: Mapped[Optional[int]] = mapped_column(Integer)
+    document_type: Mapped[Optional[str]] = mapped_column(String(128))
     title: Mapped[Optional[str]] = mapped_column(String(512))
     checksum: Mapped[Optional[str]] = mapped_column(String(128), unique=True)
     doc_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
@@ -80,6 +84,10 @@ class AnswerLog(TimestampMixin, Base):
     question: Mapped[str] = mapped_column(Text, nullable=False)
     answer: Mapped[str] = mapped_column(Text, nullable=False)
     model: Mapped[str] = mapped_column(String(255), nullable=False)
+    retrieved_chunk_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    applied_filters: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    retrieval_strategy: Mapped[Optional[str]] = mapped_column(String(255))
+    latency_ms: Mapped[Optional[int]] = mapped_column(Integer)
     citations: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     answer_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 

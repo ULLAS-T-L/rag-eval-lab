@@ -24,16 +24,23 @@ class IngestionStore:
         connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         connection.execute(text("SET search_path TO public, extensions"))
         Base.metadata.create_all(bind=connection)
+        self._ensure_document_metadata_columns()
         self.session.commit()
 
     def upsert_document(self, raw_document: RawDocument) -> Document:
         checksum = self._file_checksum(raw_document.source_path)
         existing = self.session.scalar(select(Document).where(Document.checksum == checksum))
         if existing:
+            self._apply_document_metadata(existing, raw_document)
+            self.session.flush()
             return existing
 
         document = Document(
             source_uri=str(raw_document.source_path),
+            source_file=raw_document.metadata.get("source_file") or raw_document.source_path.name,
+            company=raw_document.metadata.get("company"),
+            year=raw_document.metadata.get("year"),
+            document_type=raw_document.metadata.get("document_type"),
             title=raw_document.metadata.get("title") or raw_document.source_path.stem,
             checksum=checksum,
             doc_metadata=raw_document.metadata,
@@ -41,6 +48,28 @@ class IngestionStore:
         self.session.add(document)
         self.session.flush()
         return document
+
+    def _apply_document_metadata(self, document: Document, raw_document: RawDocument) -> None:
+        metadata = {**(document.doc_metadata or {}), **raw_document.metadata}
+        document.source_file = metadata.get("source_file") or raw_document.source_path.name
+        document.company = metadata.get("company")
+        document.year = metadata.get("year")
+        document.document_type = metadata.get("document_type")
+        document.title = metadata.get("title") or document.title or raw_document.source_path.stem
+        document.doc_metadata = metadata
+
+    def _ensure_document_metadata_columns(self) -> None:
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "postgresql":
+            self.session.execute(
+                text(
+                    "ALTER TABLE documents "
+                    "ADD COLUMN IF NOT EXISTS source_file VARCHAR(512), "
+                    "ADD COLUMN IF NOT EXISTS company VARCHAR(255), "
+                    "ADD COLUMN IF NOT EXISTS year INTEGER, "
+                    "ADD COLUMN IF NOT EXISTS document_type VARCHAR(128)"
+                )
+            )
 
     def store_chunks(self, chunks: Iterable[ChunkCandidate]) -> list[Chunk]:
         stored_chunks: list[Chunk] = []
