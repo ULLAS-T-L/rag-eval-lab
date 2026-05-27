@@ -16,6 +16,7 @@ from app.retrieval.embeddings import PlaceholderEmbeddingProvider
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Ingest PDFs into PostgreSQL pgvector.")
     parser.add_argument("--path", type=Path, default=Path("data/raw"), help="PDF file or directory path.")
+    parser.add_argument("--reset", action="store_true", help="Clear existing ingestion data before re-ingesting.")
     return parser.parse_args()
 
 
@@ -26,8 +27,18 @@ def main() -> None:
             session=session,
             embedding_provider=PlaceholderEmbeddingProvider(),
         )
-        chunk_count = pipeline.ingest_path(args.path)
-    print(f"Ingested {chunk_count} chunks from {args.path}")
+        report = pipeline.ingest_path(args.path, reset=args.reset)
+
+    print(f"PDFs found: {report.pdfs_found}")
+    print(f"Documents processed: {report.documents_processed}")
+    print(f"Pages parsed: {report.pages_parsed}")
+    print(f"Chunks created: {report.chunks_created}")
+    print(f"Table chunks created: {report.table_chunks_created}")
+    print(f"Text chunks created: {report.text_chunks_created}")
+    print(f"Embeddings stored: {report.embeddings_stored}")
+    print(f"Errors: {len(report.errors)}")
+    for error in report.errors:
+        print(f"  - {error}")
 
 
 if __name__ == "__main__":

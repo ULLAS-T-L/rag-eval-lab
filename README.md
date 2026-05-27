@@ -92,14 +92,39 @@ Put source PDFs in `data/raw`, start PostgreSQL, then run:
 python scripts/ingest.py --path data/raw
 ```
 
+To clear existing documents, chunks, retrieval logs, and answer logs before a fresh run:
+
+```powershell
+python scripts/ingest.py --path data/raw --reset
+```
+
 The ingestion pipeline:
 
-- Loads PDFs with PyMuPDF.
-- Extracts document metadata and page-level text.
-- Creates heading-aware chunks with page spans and token counts.
-- Preserves chunk metadata including `document_id`, `source_file`, `page_start`, `page_end`, `section_title`, `chunk_index`, and `token_count`.
-- Generates embeddings through the pluggable `EmbeddingProvider` interface.
-- Stores documents, chunks, metadata, and embeddings in PostgreSQL with pgvector.
+```text
+PDF
+  -> Document Parser
+  -> Structure Analyzer
+  -> Table Preserver
+  -> Boundary Detector
+  -> Metadata Generator
+  -> Question Generator
+  -> Embeddings
+  -> PostgreSQL + pgvector
+```
+
+The processing stages are:
+
+1. PDF parsing with PyMuPDF page by page.
+2. Structure analysis to detect headings and section hierarchy.
+3. Table preservation so table-like blocks stay together.
+4. Boundary detection and token-aware chunking with overlap.
+5. Metadata generation for document-level and chunk-level fields.
+6. Synthetic question generation for later evaluation workflows.
+7. Embedding creation through the pluggable `EmbeddingProvider` interface.
+8. Storage in PostgreSQL with pgvector.
+
+Document records now store `company`, `year`, `document_type`, `source_file`, `total_pages`, and `processing_status`.
+Chunk records now store `chunk_type`, `section_title`, `summary`, `keywords`, `synthetic_questions`, `token_count`, `page_start`, `page_end`, and chunk metadata JSON.
 
 The default embedding provider is a deterministic placeholder provider so the skeleton remains runnable before a real embedding service is configured.
 
