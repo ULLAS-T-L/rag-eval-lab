@@ -5,7 +5,7 @@ from typing import Any, Optional
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -106,10 +106,13 @@ class EvaluationScore(TimestampMixin, Base):
     __tablename__ = "evaluation_scores"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    answer_log_id: Mapped[Optional[str]] = mapped_column(ForeignKey("answer_logs.id"))
-    evaluator: Mapped[str] = mapped_column(String(255), nullable=False)
-    metric_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    score: Mapped[Optional[int]] = mapped_column(Integer)
+    run_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    faithfulness: Mapped[Optional[float]] = mapped_column(Float)
+    answer_relevancy: Mapped[Optional[float]] = mapped_column(Float)
+    context_precision: Mapped[Optional[float]] = mapped_column(Float)
+    context_recall: Mapped[Optional[float]] = mapped_column(Float)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     details: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
