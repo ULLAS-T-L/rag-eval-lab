@@ -1,0 +1,4 @@
+run_id,question,faithfulness,answer_relevancy,context_precision,context_recall,timestamp
+4f9853e1cb9e493dad95e0d28a6ef153,What supply chain or supplier risks does Apple disclose?,0.0,0.0,0.0,0.0,2026-06-03T03:09:07.535263+00:00
+4f9853e1cb9e493dad95e0d28a6ef153,What risks does Amazon describe around fulfillment and logistics capacity?,0.0,0.0,0.0,0.0,2026-06-03T03:09:07.535263+00:00
+4f9853e1cb9e493dad95e0d28a6ef153,What cloud or datacenter risks does Microsoft disclose?,0.0,0.0,0.0,0.0,2026-06-03T03:09:07.535263+00:00

@@ -90,6 +90,7 @@ class AnswerLog(TimestampMixin, Base):
     __tablename__ = "answer_logs"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    trulens_run_id: Mapped[Optional[str]] = mapped_column(String(64), index=True)
     retrieval_log_id: Mapped[Optional[str]] = mapped_column(ForeignKey("retrieval_logs.id"))
     question: Mapped[str] = mapped_column(Text, nullable=False)
     answer: Mapped[str] = mapped_column(Text, nullable=False)

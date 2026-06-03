@@ -1,0 +1,60 @@
+{
+  "average_scores": {
+    "faithfulness": 0.0,
+    "answer_relevancy": 0.0,
+    "context_precision": 0.0,
+    "context_recall": 0.0
+  },
+  "worst_questions": [
+    {
+      "question": "What supply chain or supplier risks does Apple disclose?",
+      "overall": 0.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    },
+    {
+      "question": "What risks does Amazon describe around fulfillment and logistics capacity?",
+      "overall": 0.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    },
+    {
+      "question": "What cloud or datacenter risks does Microsoft disclose?",
+      "overall": 0.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    }
+  ],
+  "best_questions": [
+    {
+      "question": "What cloud or datacenter risks does Microsoft disclose?",
+      "overall": 0.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    },
+    {
+      "question": "What risks does Amazon describe around fulfillment and logistics capacity?",
+      "overall": 0.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    },
+    {
+      "question": "What supply chain or supplier risks does Apple disclose?",
+      "overall": 0.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    }
+  ]
+}

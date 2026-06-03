@@ -13,6 +13,7 @@ from app.agents.answer_generator import (
 )
 from app.agents.planner import QueryPlanner
 from app.db.models import AnswerLog
+from app.evaluation.trulens_tracing import TruLensTracer
 from app.retrieval.embeddings import EmbeddingProvider
 from app.retrieval.rerankers import BaseReranker
 from app.retrieval.retriever import RetrievalFilters, RetrievalService, VectorRetriever
@@ -28,6 +29,8 @@ class AskResult:
     confidence_score: None
     latency_ms: int
     token_usage: None
+    trulens_run_id: str
+    observability_scores: dict[str, float]
 
 
 class ReasoningRouter:
@@ -38,12 +41,14 @@ class ReasoningRouter:
         reranker: BaseReranker,
         planner: Optional[QueryPlanner] = None,
         answer_generator: Optional[GroundedAnswerGenerator] = None,
+        trulens_tracer: Optional[TruLensTracer] = None,
     ) -> None:
         self.session = session
         self.embedding_provider = embedding_provider
         self.reranker = reranker
         self.planner = planner or QueryPlanner()
         self.answer_generator = answer_generator or GroundedAnswerGenerator()
+        self.trulens_tracer = trulens_tracer or TruLensTracer()
 
     def ask(self, query: str, top_k: int, filters: Optional[dict[str, Any]] = None) -> AskResult:
         started = perf_counter()
@@ -51,6 +56,15 @@ class ReasoningRouter:
 
         if plan.retrieval_strategy == "insufficient_query":
             latency_ms = int((perf_counter() - started) * 1000)
+            trace = self.trulens_tracer.record_pipeline(
+                question=query,
+                retrieved_chunks=[],
+                generated_answer=INSUFFICIENT_EVIDENCE_MESSAGE,
+                citations=[],
+                latency_ms=latency_ms,
+                retrieval_latency_ms=0,
+                generation_latency_ms=0,
+            )
             result = AskResult(
                 answer=INSUFFICIENT_EVIDENCE_MESSAGE,
                 citations=[],
@@ -60,8 +74,10 @@ class ReasoningRouter:
                 confidence_score=None,
                 latency_ms=latency_ms,
                 token_usage=None,
+                trulens_run_id=trace.run_id,
+                observability_scores=trace.feedback_scores.to_dict(),
             )
-            self._log_answer(query=query, result=result)
+            self._log_answer(query=query, result=result, trace_metadata=trace.to_metadata())
             return result
 
         retriever = VectorRetriever(session=self.session, embedding_provider=self.embedding_provider)
@@ -71,14 +87,25 @@ class ReasoningRouter:
             reranker=self.reranker,
         )
         retrieval_filters = RetrievalFilters.from_dict(plan.filters)
-        chunks, _ = retrieval_service.retrieve(
+        chunks, retrieval_latency_ms = retrieval_service.retrieve(
             query=plan.query,
             top_k=top_k,
             filters=retrieval_filters,
             strategy=plan.retrieval_strategy,
         )
-        generated = self.answer_generator.generate(query=plan.query, chunks=chunks)
+        generated, generation_latency_ms = self.trulens_tracer.timed(
+            lambda: self.answer_generator.generate(query=plan.query, chunks=chunks)
+        )
         latency_ms = int((perf_counter() - started) * 1000)
+        trace = self.trulens_tracer.record_pipeline(
+            question=plan.query,
+            retrieved_chunks=chunks,
+            generated_answer=generated.answer,
+            citations=generated.citations,
+            latency_ms=latency_ms,
+            retrieval_latency_ms=retrieval_latency_ms,
+            generation_latency_ms=generation_latency_ms,
+        )
         result = AskResult(
             answer=generated.answer,
             citations=generated.citations,
@@ -88,8 +115,10 @@ class ReasoningRouter:
             confidence_score=generated.confidence_score,
             latency_ms=latency_ms,
             token_usage=generated.token_usage,
+            trulens_run_id=trace.run_id,
+            observability_scores=trace.feedback_scores.to_dict(),
         )
-        self._log_answer(query=query, result=result)
+        self._log_answer(query=query, result=result, trace_metadata=trace.to_metadata())
         return result
 
     def _chunk_payload(self, chunk) -> dict[str, Any]:
@@ -105,9 +134,15 @@ class ReasoningRouter:
             "text_preview": chunk.chunk_text[:500],
         }
 
-    def _log_answer(self, query: str, result: AskResult) -> None:
+    def _log_answer(
+        self,
+        query: str,
+        result: AskResult,
+        trace_metadata: Optional[dict[str, Any]] = None,
+    ) -> None:
         self._ensure_answer_log_columns()
         log = AnswerLog(
+            trulens_run_id=result.trulens_run_id,
             question=query,
             answer=result.answer,
             model="grounded-deterministic",
@@ -120,6 +155,8 @@ class ReasoningRouter:
                 "query": query,
                 "token_usage": result.token_usage,
                 "confidence_score": result.confidence_score,
+                "trulens": trace_metadata or {},
+                "observability_scores": result.observability_scores,
             },
         )
         self.session.add(log)
@@ -134,6 +171,7 @@ class ReasoningRouter:
                     "ADD COLUMN IF NOT EXISTS retrieved_chunk_ids JSON DEFAULT '[]', "
                     "ADD COLUMN IF NOT EXISTS applied_filters JSON DEFAULT '{}', "
                     "ADD COLUMN IF NOT EXISTS retrieval_strategy VARCHAR(255), "
-                    "ADD COLUMN IF NOT EXISTS latency_ms INTEGER"
+                    "ADD COLUMN IF NOT EXISTS latency_ms INTEGER, "
+                    "ADD COLUMN IF NOT EXISTS trulens_run_id VARCHAR(64)"
                 )
             )

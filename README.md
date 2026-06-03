@@ -177,13 +177,51 @@ Flow:
 2. The router chooses `vector_only`, `metadata_then_vector`, or `insufficient_query`.
 3. For `metadata_then_vector`, SQL predicates restrict eligible documents and chunks first, then pgvector cosine similarity ranks only those rows.
 4. The grounded answer generator answers only from retrieved chunk text and returns citations from retrieved metadata.
-5. The answer is logged to `answer_logs` with retrieved chunk IDs, applied filters, retrieval strategy, citations, and latency.
+5. TruLens-style tracing captures the question, retrieved chunks, similarity scores, generated answer, citations, retrieval latency, generation latency, and end-to-end latency.
+6. The answer is logged to `answer_logs` with a `trulens_run_id`, retrieved chunk IDs, applied filters, retrieval strategy, citations, latency, and observability scores.
 
 Retrieval, generation, and evaluation are separate responsibilities:
 
 - Retrieval finds and ranks evidence chunks using metadata filters and vector search.
 - Generation turns retrieved evidence into a grounded answer with citations and no outside knowledge.
-- Evaluation is a later offline/online quality layer for RAGAS, TruLens, and review workflows; it is not implemented in this step.
+- Evaluation and observability measure quality with RAGAS and TruLens without changing retrieval or generation behavior.
+
+## Evaluation and Observability
+
+RAGAS and TruLens answer different questions:
+
+- RAGAS is an offline evaluation framework. It scores prepared datasets with `question`, `ground_truth`, `contexts`, and `answer` fields, then reports metrics such as faithfulness, answer relevancy, context precision, and context recall. Use it for benchmark runs, regression testing, and objective comparison across retrievers, prompts, models, or chunking strategies.
+- TruLens is an observability and tracing framework. It records live application runs and feedback scores for each answer pipeline execution. Use it to inspect what happened for a specific user question: which chunks were retrieved, what scores they had, what answer was generated, which citations were returned, and how long each step took.
+
+Run RAGAS evaluation:
+
+```powershell
+python scripts/run_ragas_eval.py
+```
+
+The RAGAS report is exported to `evals/reports/ragas_report.csv`.
+
+Every `/query/ask` call now creates a TruLens trace run id and stores it in `answer_logs.trulens_run_id`. Trace metadata is also stored in `answer_logs.answer_metadata["trulens"]`, including:
+
+- question
+- retrieved chunks
+- similarity scores
+- generated answer
+- citations
+- retrieval latency
+- generation latency
+- end-to-end latency
+- context relevance
+- groundedness
+- answer relevance
+
+Launch the TruLens dashboard:
+
+```powershell
+python scripts/run_trulens_dashboard.py --port 8501
+```
+
+Then open `http://localhost:8501`. If the dashboard fails to start, verify that the local TruLens, pandas, numpy, and streamlit versions are compatible.
 
 ## Next Implementation Steps
 
@@ -191,5 +229,4 @@ Retrieval, generation, and evaluation are separate responsibilities:
 - Add a real embedding provider implementation.
 - Expand structure-aware chunking for tables and page references.
 - Convert `app/agents/workflow.py` placeholders into a compiled LangGraph graph.
-- Add RAGAS datasets and TruLens instrumentation.
 - Expand red-team scenarios into automated regression tests.
