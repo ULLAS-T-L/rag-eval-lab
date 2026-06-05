@@ -13,8 +13,7 @@ from app.agents.router import ReasoningRouter
 from app.db.session import SessionLocal
 from app.evaluation.datasets import EvaluationDatasetBuilder
 from app.evaluation.ragas_runner import DEBUG_DATASET_PATH, REPORT_PATH, SUMMARY_PATH, RagasRunner
-from app.retrieval.embeddings import PlaceholderEmbeddingProvider
-from app.retrieval.rerankers import NoOpReranker
+from app.retrieval.providers import get_embedding_provider, get_reranker
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,8 +32,8 @@ def main() -> None:
     with SessionLocal() as session:
         router = ReasoningRouter(
             session=session,
-            embedding_provider=PlaceholderEmbeddingProvider(),
-            reranker=NoOpReranker(),
+            embedding_provider=get_embedding_provider(),
+            reranker=get_reranker(),
         )
 
         def answer_fn(question: str, filters: dict[str, Any]) -> tuple[str, list[str]]:

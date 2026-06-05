@@ -8,8 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.agents.router import ReasoningRouter
 from app.db.session import get_db
-from app.retrieval.embeddings import PlaceholderEmbeddingProvider
-from app.retrieval.rerankers import NoOpReranker
+from app.retrieval.providers import get_embedding_provider, get_reranker
 from app.retrieval.retriever import RetrievalFilters, RetrievalService, VectorRetriever
 
 router = APIRouter(prefix="/query", tags=["query"])
@@ -64,9 +63,9 @@ class AskResponse(BaseModel):
 def retrieve(request: RetrieveRequest, db: Session = Depends(get_db)) -> RetrieveResponse:
     retriever = VectorRetriever(
         session=db,
-        embedding_provider=PlaceholderEmbeddingProvider(),
+        embedding_provider=get_embedding_provider(),
     )
-    service = RetrievalService(session=db, retriever=retriever, reranker=NoOpReranker())
+    service = RetrievalService(session=db, retriever=retriever, reranker=get_reranker())
     filters = RetrievalFilters(
         document_id=request.document_id,
         source_file=request.source_file,
@@ -103,8 +102,8 @@ def retrieve(request: RetrieveRequest, db: Session = Depends(get_db)) -> Retriev
 def ask(request: AskRequest, db: Session = Depends(get_db)) -> AskResponse:
     router_service = ReasoningRouter(
         session=db,
-        embedding_provider=PlaceholderEmbeddingProvider(),
-        reranker=NoOpReranker(),
+        embedding_provider=get_embedding_provider(),
+        reranker=get_reranker(),
     )
     result = router_service.ask(
         query=request.query,

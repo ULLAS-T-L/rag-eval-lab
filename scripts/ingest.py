@@ -10,7 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.db.session import SessionLocal
 from app.ingestion.pipeline import IngestionPipeline
-from app.retrieval.embeddings import PlaceholderEmbeddingProvider
+from app.retrieval.providers import get_embedding_provider
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,7 +25,7 @@ def main() -> None:
     with SessionLocal() as session:
         pipeline = IngestionPipeline(
             session=session,
-            embedding_provider=PlaceholderEmbeddingProvider(),
+            embedding_provider=get_embedding_provider(),
         )
         report = pipeline.ingest_path(args.path, reset=args.reset)
 

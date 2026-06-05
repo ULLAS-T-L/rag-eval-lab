@@ -13,8 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.agents.router import ReasoningRouter
 from app.db.session import SessionLocal
-from app.retrieval.embeddings import PlaceholderEmbeddingProvider
-from app.retrieval.rerankers import NoOpReranker
+from app.retrieval.providers import get_embedding_provider, get_reranker
 
 
 DEBUG_DATASET_PATH = Path("evals/reports/ragas_debug_dataset.json")
@@ -87,8 +86,8 @@ def main() -> None:
     with SessionLocal() as session:
         router = ReasoningRouter(
             session=session,
-            embedding_provider=PlaceholderEmbeddingProvider(),
-            reranker=NoOpReranker(),
+            embedding_provider=get_embedding_provider(),
+            reranker=get_reranker(),
         )
         for failure in failures:
             result = router.ask(

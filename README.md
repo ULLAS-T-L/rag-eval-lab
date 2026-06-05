@@ -56,6 +56,18 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
+Embedding and reranker providers are configurable:
+
+```powershell
+EMBEDDING_PROVIDER=auto
+EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_DIMENSIONS=1536
+RERANKER_PROVIDER=lexical
+RERANKER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+```
+
+`EMBEDDING_PROVIDER=auto` uses OpenAI embeddings when `OPENAI_API_KEY` is set; otherwise it uses the deterministic placeholder provider. After switching from placeholder to OpenAI embeddings, re-ingest with `python scripts/ingest.py --path data/raw --reset` so stored vectors and query vectors use the same model. Set `RERANKER_PROVIDER=cross_encoder` to enable the sentence-transformers cross-encoder reranker; the default `lexical` reranker is local and does not download a model.
+
 4. Run the API locally.
 
 ```powershell
