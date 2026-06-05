@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
+
+import pytest
 
 from app.db.models import EvaluationScore
 from app.evaluation.datasets import (
+    EvaluationExample,
     EvaluationDatasetBuilder,
     MANUAL_BENCHMARK_QUESTIONS,
     to_ragas_dataset,
@@ -63,14 +67,133 @@ def test_runner_exports_csv_and_summary_with_fallback(tmp_path) -> None:
         run_id="run-1",
         report_path=tmp_path / "ragas_report.csv",
         summary_path=tmp_path / "ragas_summary.json",
+        debug_dataset_path=tmp_path / "ragas_debug_dataset.json",
     )
 
     assert result.report_path.exists()
     assert result.summary_path.exists()
+    debug_path = tmp_path / "ragas_debug_dataset.json"
+    assert debug_path.exists()
+    debug_payload = json.loads(debug_path.read_text(encoding="utf-8"))
+    assert debug_payload[0]["contexts"] == ["Apple relies on suppliers for availability."]
+    assert debug_payload[0]["context_count"] == 1
     csv_text = result.report_path.read_text(encoding="utf-8")
     assert "run_id,question,faithfulness,answer_relevancy,context_precision,context_recall,timestamp" in csv_text
     assert "run-1" in csv_text
     assert result.aggregate_report.averages
+
+
+def test_runner_fails_when_contexts_are_empty(tmp_path) -> None:
+    examples = [
+        EvaluationExample(
+            question="What supply chain or supplier risks does Apple disclose?",
+            ground_truth="Apple discloses supplier and supply chain risks.",
+            contexts=[],
+            answer="Apple discloses supplier risks.",
+        )
+    ]
+
+    with pytest.raises(ValueError, match="empty contexts"):
+        RagasRunner().run(
+            examples,
+            report_path=tmp_path / "ragas_report.csv",
+            summary_path=tmp_path / "ragas_summary.json",
+            debug_dataset_path=tmp_path / "ragas_debug_dataset.json",
+        )
+
+
+def test_runner_fails_when_contexts_are_not_list_of_strings(tmp_path) -> None:
+    examples = [
+        EvaluationExample(
+            question="What supply chain or supplier risks does Apple disclose?",
+            ground_truth="Apple discloses supplier and supply chain risks.",
+            contexts='["Apple supplier risks"]',
+            answer="Apple discloses supplier risks.",
+        )
+    ]
+
+    with pytest.raises(TypeError, match=r"contexts must be list\[str\]"):
+        RagasRunner().run(
+            examples,
+            report_path=tmp_path / "ragas_report.csv",
+            summary_path=tmp_path / "ragas_summary.json",
+            debug_dataset_path=tmp_path / "ragas_debug_dataset.json",
+        )
+
+
+def test_runner_fails_when_answer_or_ground_truth_is_empty(tmp_path) -> None:
+    invalid_answer = [
+        EvaluationExample(
+            question="What supply chain or supplier risks does Apple disclose?",
+            ground_truth="Apple discloses supplier and supply chain risks.",
+            contexts=["Apple relies on suppliers."],
+            answer="",
+        )
+    ]
+    invalid_ground_truth = [
+        EvaluationExample(
+            question="What supply chain or supplier risks does Apple disclose?",
+            ground_truth="",
+            contexts=["Apple relies on suppliers."],
+            answer="Apple discloses supplier risks.",
+        )
+    ]
+
+    runner = RagasRunner()
+    with pytest.raises(ValueError, match="empty answer"):
+        runner.run(
+            invalid_answer,
+            report_path=tmp_path / "answer_report.csv",
+            summary_path=tmp_path / "answer_summary.json",
+            debug_dataset_path=tmp_path / "answer_debug.json",
+        )
+    with pytest.raises(ValueError, match="empty ground_truth"):
+        runner.run(
+            invalid_ground_truth,
+            report_path=tmp_path / "truth_report.csv",
+            summary_path=tmp_path / "truth_summary.json",
+            debug_dataset_path=tmp_path / "truth_debug.json",
+        )
+
+
+def test_apple_ragas_smoke_dataset_scores_non_zero_with_fallback(tmp_path) -> None:
+    examples = [
+        EvaluationExample(
+            question="What supply chain or supplier risks does Apple disclose?",
+            ground_truth=(
+                "Apple discloses supply constraints, component availability, supplier "
+                "performance, logistics disruptions, and reliance on third-party manufacturers."
+            ),
+            contexts=[
+                (
+                    "Apple depends on component availability, supplier performance, logistics, "
+                    "and third-party manufacturers. Supply constraints can affect product "
+                    "availability, costs, and operating results."
+                )
+            ],
+            answer=(
+                "Apple discloses risks from component availability, supplier performance, "
+                "logistics disruptions, and third-party manufacturers."
+            ),
+            metadata={"source": "hardcoded_smoke_test", "company": "Apple"},
+        )
+    ]
+    runner = RagasRunner(allow_fallback=True)
+    runner._run_ragas = lambda examples: (_ for _ in ()).throw(RuntimeError("no provider"))
+
+    result = runner.run(
+        examples,
+        run_id="apple-smoke",
+        report_path=tmp_path / "ragas_report.csv",
+        summary_path=tmp_path / "ragas_summary.json",
+        debug_dataset_path=tmp_path / "ragas_debug_dataset.json",
+    )
+
+    row = result.rows[0]
+    assert row.faithfulness > 0
+    assert row.answer_relevancy > 0
+    assert row.context_precision > 0
+    assert row.context_recall > 0
 
 
 def test_runner_persists_one_evaluation_score_per_question() -> None:

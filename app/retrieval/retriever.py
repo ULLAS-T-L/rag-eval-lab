@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 from math import isfinite
+import re
 from time import perf_counter
 from typing import Any, Optional, Protocol
 from uuid import UUID
@@ -52,6 +53,17 @@ class RetrievalFilters:
             "page_end": self.page_end,
             "section_title": self.section_title,
         }
+
+    def without_section_title(self) -> "RetrievalFilters":
+        return RetrievalFilters(
+            document_id=self.document_id,
+            source_file=self.source_file,
+            company=self.company,
+            year=self.year,
+            page=self.page,
+            page_start=self.page_start,
+            page_end=self.page_end,
+        )
 
 
 @dataclass(frozen=True)
@@ -113,15 +125,22 @@ class VectorRetriever:
         query_vector = self.embedding_provider.embed_query(query)
         matched_document_ids = self._matched_document_ids(filters)
         candidate_chunk_count = self._candidate_chunk_count(filters)
+        active_filters = filters
+        if filters is not None and filters.section_title and candidate_chunk_count == 0:
+            active_filters = filters.without_section_title()
+            candidate_chunk_count = self._candidate_chunk_count(active_filters)
+            matched_document_ids = self._matched_document_ids(active_filters)
         logger.debug(
             "retrieval_debug applied_filters=%s matched_document_ids=%s candidate_chunks=%s",
-            filters.to_dict() if filters else {},
+            active_filters.to_dict() if active_filters else {},
             matched_document_ids,
             candidate_chunk_count,
         )
-        statement = self.build_query(query_vector=query_vector, top_k=top_k, filters=filters)
+        candidate_limit = max(top_k * 50, candidate_chunk_count or 0, 50)
+        statement = self.build_query(query_vector=query_vector, top_k=candidate_limit, filters=active_filters)
         rows = self.session.execute(statement).all()
         chunks = [self._row_to_chunk(row) for row in rows]
+        chunks = self._rank_chunks(query=query, chunks=chunks, filters=active_filters)[:top_k]
         logger.debug(
             "retrieval_debug retrieved_chunks=%s strategy=%s",
             len(chunks),
@@ -188,7 +207,15 @@ class VectorRetriever:
         if filters.page_end is not None:
             predicates.append(Chunk.chunk_metadata["page_start"].as_integer() <= filters.page_end)
         if filters.section_title:
-            predicates.append(Chunk.section_path == filters.section_title)
+            section_pattern = f"%{filters.section_title.lower()}%"
+            predicates.append(
+                or_(
+                    func.lower(Chunk.section_path).like(section_pattern),
+                    func.lower(Chunk.section_title).like(section_pattern),
+                    func.lower(Chunk.chunk_metadata["section_path"].as_string()).like(section_pattern),
+                    func.lower(Chunk.chunk_metadata["section_title"].as_string()).like(section_pattern),
+                )
+            )
         return predicates
 
     def _matched_document_ids(self, filters: Optional[RetrievalFilters]) -> list[str]:
@@ -208,6 +235,64 @@ class VectorRetriever:
         if predicates:
             statement = statement.where(and_(*predicates))
         return int(self.session.execute(statement).scalar() or 0)
+
+    def _rank_chunks(
+        self,
+        *,
+        query: str,
+        chunks: list[RetrievedChunk],
+        filters: Optional[RetrievalFilters],
+    ) -> list[RetrievedChunk]:
+        query_terms = _terms(query)
+        if not query_terms:
+            return chunks
+
+        intent_terms = _intent_terms(query_terms)
+        focus_terms = _focus_terms(query_terms)
+        ranked: list[tuple[float, RetrievedChunk]] = []
+        for chunk in chunks:
+            chunk_terms = _terms(chunk.chunk_text)
+            keyword_terms = _metadata_terms(chunk.metadata.get("keywords", []))
+            section_terms = _terms(
+                " ".join(
+                    str(value or "")
+                    for value in (
+                        chunk.metadata.get("section_title"),
+                        chunk.metadata.get("section_path"),
+                        chunk.citations[0].section_title if chunk.citations else "",
+                        filters.section_title if filters else "",
+                    )
+                )
+            )
+            lexical_score = len(query_terms.intersection(chunk_terms)) / len(query_terms)
+            focus_score = len(focus_terms.intersection(chunk_terms)) / max(len(focus_terms), 1)
+            intent_score = len(intent_terms.intersection(chunk_terms)) / max(len(intent_terms), 1)
+            keyword_score = len(query_terms.intersection(keyword_terms)) / len(query_terms)
+            section_score = len(intent_terms.intersection(section_terms)) / max(len(intent_terms), 1)
+            vector_score = max(0.0, min(1.0, chunk.similarity_score))
+            combined_score = (
+                0.10 * vector_score
+                + 0.30 * lexical_score
+                + 0.35 * focus_score
+                + 0.15 * intent_score
+                + 0.10 * keyword_score
+                + 0.05 * section_score
+            )
+            if combined_score >= 0.08 or lexical_score >= 0.2 or focus_score > 0:
+                ranked.append((combined_score, chunk))
+
+        ranked.sort(key=lambda item: item[0], reverse=True)
+        return [
+            RetrievedChunk(
+                chunk_id=chunk.chunk_id,
+                chunk_text=chunk.chunk_text,
+                similarity_score=round(score, 4),
+                document_metadata=chunk.document_metadata,
+                citations=chunk.citations,
+                metadata={**chunk.metadata, "vector_similarity_score": chunk.similarity_score},
+            )
+            for score, chunk in ranked
+        ]
 
     def _ensure_document_metadata_columns(self) -> None:
         bind = self.session.get_bind()
@@ -337,3 +422,88 @@ class RetrievalService:
 
 
 PgVectorRetriever = VectorRetriever
+
+
+def _terms(text: str) -> set[str]:
+    stopwords = {
+        "a",
+        "an",
+        "and",
+        "are",
+        "around",
+        "by",
+        "describe",
+        "disclose",
+        "does",
+        "from",
+        "in",
+        "of",
+        "or",
+        "the",
+        "to",
+        "what",
+        "which",
+    }
+    terms = set()
+    for raw_term in re.findall(r"[a-zA-Z][a-zA-Z0-9-]{2,}", text.lower()):
+        if raw_term in stopwords:
+            continue
+        terms.add(_normalize_term(raw_term))
+    return terms
+
+
+def _normalize_term(term: str) -> str:
+    aliases = {
+        "risks": "risk",
+        "suppliers": "supplier",
+        "manufacturers": "manufacturer",
+        "disruptions": "disruption",
+        "services": "service",
+        "clouds": "cloud",
+        "datacenters": "datacenter",
+        "centers": "center",
+    }
+    if term in aliases:
+        return aliases[term]
+    if term.endswith("ies") and len(term) > 4:
+        return f"{term[:-3]}y"
+    if term.endswith("s") and len(term) > 4:
+        return term[:-1]
+    return term
+
+
+def _intent_terms(query_terms: set[str]) -> set[str]:
+    related = {
+        "supply": {"supply", "supplier", "vendor", "component", "manufacturing", "manufacturer", "logistic"},
+        "supplier": {"supply", "supplier", "vendor", "component", "manufacturer"},
+        "chain": {"chain", "logistic", "distribution", "inventory", "transport"},
+        "fulfillment": {"fulfillment", "distribution", "logistic", "inventory", "carrier", "transport"},
+        "logistic": {"logistic", "distribution", "carrier", "transport", "supply"},
+        "cloud": {"cloud", "datacenter", "server", "infrastructure", "capacity", "security", "energy"},
+        "datacenter": {"datacenter", "data", "center", "infrastructure", "capacity", "energy"},
+        "risk": {"risk", "disruption", "constraint", "dependence", "shortage", "failure", "availability"},
+    }
+    expanded = set(query_terms)
+    for term in query_terms:
+        expanded.update(related.get(term, set()))
+    return expanded
+
+
+def _focus_terms(query_terms: set[str]) -> set[str]:
+    broad_terms = {"risk", "apple", "amazon", "microsoft", "describe", "disclose"}
+    focus = {term for term in query_terms if term not in broad_terms}
+    if "supply" in query_terms or "supplier" in query_terms:
+        focus.update({"supply", "supplier", "component", "manufacturer", "logistic"})
+    if "fulfillment" in query_terms or "logistic" in query_terms:
+        focus.update({"fulfillment", "logistic", "distribution", "inventory", "carrier", "capacity"})
+    if "cloud" in query_terms or "datacenter" in query_terms:
+        focus.update({"cloud", "datacenter", "infrastructure", "capacity", "energy", "security"})
+    return focus
+
+
+def _metadata_terms(value: Any) -> set[str]:
+    if isinstance(value, list):
+        return _terms(" ".join(str(item) for item in value))
+    if isinstance(value, str):
+        return _terms(value)
+    return set()

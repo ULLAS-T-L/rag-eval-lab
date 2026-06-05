@@ -1,0 +1,62 @@
+[
+  {
+    "question": "What supply chain or supplier risks does Apple disclose?",
+    "ground_truth": "Apple discloses that supply constraints, component availability, supplier performance, logistics disruptions, and reliance on third-party manufacturers can affect product availability, costs, and operating results.",
+    "contexts": [
+      "The Company\u2019s business can be impacted by political events, trade and other international disputes, geopolitical \ntensions, conflict, terrorism, natural disasters, public health issues, industrial accidents and other business \ninterruptions.\nPolitical events, trade and other international disputes, geopolitical tensions, conflict, terrorism, natural disasters, public health \nissues, industrial accidents and other business interruptions can have a material adverse effect on the Company and its \nc",
+      "Business Risks\nTo remain competitive and stimulate customer demand, the Company must successfully manage frequent introductions \nand transitions of products and services.\nDue to the highly volatile and competitive nature of the markets and industries in which the Company competes, the Company \nmust continually introduce new products, services and technologies, enhance existing products and services, effectively \nstimulate customer demand for new and upgraded products and services, navigate globa",
+      "Item 1A. \nRisk Factors\nThe following summarizes factors that could have a material adverse effect on the Company\u2019s business, reputation, results of \noperations, financial condition and stock price. The Company may not be able to accurately predict, control or mitigate these \nrisks. Statements in this section are based on the Company\u2019s beliefs and opinions regarding matters that could materially \nadversely affect the Company in the future and are not representations as to whether such matters hav",
+      "The Company depends on the performance of carriers and other resellers.\nThe Company distributes its products and certain of its services through cellular network carriers and other resellers, many of \nwhich distribute products and services from competitors. Resellers offer financing, installment payment plans or subsidies for \nusers\u2019 purchases of devices, and such plans may be discontinued or modified any time.\nThe Company has invested and will continue to invest in programs to enhance reseller ",
+      "The Company\u2019s business is subject to a variety of U.S. and international laws, rules, policies and other obligations \nregarding the collection, use, protection and transfer of personal data.\nThe Company is subject to an increasing number of federal, state and international laws relating to the collection, use, retention, \nprotection and transfer of various types of personal data. In many cases, these laws apply not only to third-party transactions, but \nalso restrict transfers of personal data a"
+    ],
+    "answer": "Answer to the question: What supply chain or supplier risks does Apple disclose?\n- Major public health issues, including pandemics such as the COVID-19 pandemic, have adversely affected, and could in the \nfuture materially adversely affect, the Company due to their impact on the global economy and demand for consumer products; \nthe imposition of protective public safety measures, such as stringent employee travel restrictions and limitations on freight \nservices and the movement of products between regions; and disruptions in the Company\u2019s operations, supply chain and sales \na [1]\n- Success also relies on the Company\u2019s ability to manage the risks associated with \nnew technologies and production ramp-up issues, the effective integration of third-party services and technologies into the \nCompany\u2019s products and services, the availability, delivery and performance of application software or other third-party support \nfor the Company\u2019s products and services, the effective management of manufacturing and other purchase commitments and the \nmanagement of inventory levels in line w [2]\n- In addition, the Company\u2019s global supply chain is large and complex and a majority of the Company\u2019s supplier facilities, including \nmanufacturing and assembly sites, are located outside the U.S. [3]",
+    "metadata": {
+      "source": "manual_benchmark",
+      "filters": {
+        "company": "Apple",
+        "source_file": "Apple_10k.pdf"
+      }
+    },
+    "context_count": 5
+  },
+  {
+    "question": "What risks does Amazon describe around fulfillment and logistics capacity?",
+    "ground_truth": "Amazon describes risks from fulfillment network constraints, transportation and logistics disruptions, rising operating costs, inventory management, and dependence on third parties that may affect delivery speed and customer experience.",
+    "contexts": [
+      "Distribution and Logistics\nWe have a comprehensive approach to the management of our merchandise supply chain. We continuously evaluate the impact of our omni-channel strategies on our \nbusiness, and frequently implement enhancements to our supply chain infrastructure and warehouse management system to support store and e-commerce fulfillment.\nOur main retail distribution center in Jackson, Tennessee services approximately 70% of our stores and a third-party operated retail fulfillment facility ",
+      "21\nfailure to replace any one or more of them may harm our relationship with our customers resulting in a loss of net sales.\nOur success is highly dependent on our planning and control processes and our supply chain, and any disruption in or failure to continue to improve these processes may \nresult in a loss of net sales and net income.\nAn important part of our efforts to achieve efficiencies, cost reductions and net sales growth is the continued identification and implementation of improvement",
+      "8\nWe currently utilize third-party carriers to transport merchandise from our Jackson, Tennessee and Lancaster, Texas distribution centers to our stores. Almost all of our \nstores utilize direct, full truckload deliveries, which results in lower distribution costs and allows our field personnel to better schedule store associates for the receiving process. \nInformation Technology\nWe invest in our information technology to manage the purchase, pricing and distribution of our merchandise, improve ",
+      "15\nOur business has evolved from an in-store experience to interactions with customers across multiple channels including in-store, online, mobile and social media, among \nothers. Our customers are using computers, tablets, mobile phones and other devices to shop on our website and provide feedback and public commentary about all aspects of our \nbusiness. Omni-channel retailing is rapidly evolving, and we must keep pace with changing customer expectations and new developments and technology inve",
+      "17\nSeveral of our competitors have greater financial, distribution, logistics, marketing and other resources available to them, and they may also be able to adapt to changes in \ncustomer requirements more quickly, devote greater resources to the design, sourcing, distribution, marketing and sale of their products, generate greater national brand \nrecognition or adopt more aggressive pricing policies. Our competitors may also be able to increase sales in their new and existing markets faster than"
+    ],
+    "answer": "Answer to the question: What risks does Amazon describe around fulfillment and logistics capacity?\n- Distribution and Logistics\nWe have a comprehensive approach to the management of our merchandise supply chain. [1]\n- Risks Related to Technology and Data Security\nFailure to protect the integrity and security of individually identifiable data of our customers and employees could expose us to litigation and damage our reputation; the \nexpansion of our e-commerce business has inherent cybersecurity risks that may result in business disruptions. [2]\n- Successful operation of our e-commerce initiatives are dependent on our ability to maintain uninterrupted availability of the Company\u2019s website and supporting \napplications, adequate and accurate inventory levels of margin positive products, timely fulfillment of customer orders, accurate shipping of undamaged products at acceptable \nshipping rates, and coordination of those activities within our stores when appropriate. [3]",
+    "metadata": {
+      "source": "manual_benchmark",
+      "filters": {
+        "company": "Amazon",
+        "source_file": "Amazon_10k.pdf"
+      }
+    },
+    "context_count": 5
+  },
+  {
+    "question": "What cloud or datacenter risks does Microsoft disclose?",
+    "ground_truth": "Microsoft discloses that cloud services depend on datacenter capacity, reliable infrastructure, energy availability, security, supplier performance, and continued investment to meet demand and maintain service availability.",
+    "contexts": [
+      "Search and News Advertising\nOur Search and news advertising business is designed to deliver relevant search, native, and display advertising to a global audience. Our Microsoft \nEdge browser and Bing Chat capabilities are key tools to enable user acquisition and engagement, while our technology platform enables accelerated \ndelivery of digital advertising solutions. In addition to first-party tools, we have several partnerships with companies, such as Yahoo, through which we \nprovide and monetiz",
+      "Economic Conditions, Challenges, and Risks\nThe markets for software, devices, and cloud-based services are dynamic and highly competitive. Our competitors are developing new software and \ndevices, while also deploying competing cloud-based services for consumers and businesses. The devices and form factors customers prefer evolve \nrapidly, influencing how users access services in the cloud and, in some cases, the user\u2019s choice of which suite of cloud-based services to use. \nAggregate demand for ",
+      "OPERATIONAL RISKS\nWe may have excessive outages, data losses, and disruptions of our online services if we fail to maintain an adequate operations \ninfrastructure. Our increasing user traffic, growth in services, and the complexity of our products and services demand more computing power. We \nspend substantial amounts to build, purchase, or lease datacenters and equipment and to upgrade our technology and network infrastructure to handle \nmore traffic on our websites and in our datacenters. Our ",
+      "Intelligent Cloud\nOur Intelligent Cloud segment consists of our public, private, and hybrid server products and cloud services that can power modern business and \ndevelopers. This segment primarily comprises: \n\u2022Server products and cloud services, including Azure and other cloud services; SQL Server, Windows Server, Visual Studio, System Center, and \nrelated Client Access Licenses (\u201cCALs\u201d); and Nuance and GitHub. \n\u2022Enterprise Services, including Enterprise Support Services, Industry Solutions (fo",
+      "Income Taxes\nAs a result of the TCJA, we are required to pay a one-time transition tax on deferred foreign income not previously subject to U.S. income tax. Under the \nTCJA, the transition tax is payable in interest-free installments over eight years, with 8% due in each of the first five years, 15% in year six, 20% in year \nseven, and 25% in year eight. We have paid transition tax of $7.7 billion, which included $1.5 billion for fiscal year 2023. The remaining transition tax of \n$10.5 billion i"
+    ],
+    "answer": "Answer to the question: What cloud or datacenter risks does Microsoft disclose?\n- Our datacenters depend on the availability of permitted and buildable land, predictable energy, networking supplies, and servers, including \ngraphics processing units (\u201cGPUs\u201d) and other components. [1]\n- Our datacenters depend on the availability of permitted and buildable \nland, predictable energy, networking supplies, and servers, including graphics processing units (\u201cGPUs\u201d) and other components. [2]\n- OPERATIONAL RISKS\nWe may have excessive outages, data losses, and disruptions of our online services if we fail to maintain an adequate operations \ninfrastructure. [3]",
+    "metadata": {
+      "source": "manual_benchmark",
+      "filters": {
+        "company": "Microsoft",
+        "source_file": "Microsoft_10k.pdf"
+      }
+    },
+    "context_count": 5
+  }
+]

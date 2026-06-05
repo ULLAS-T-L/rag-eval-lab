@@ -145,7 +145,28 @@ def test_pgvector_query_uses_cosine_distance_and_filters() -> None:
     assert "page_start" in params
     assert "page_end" in params
     assert "chunks.section_path" in sql
+    assert "chunks.section_title" in sql
     assert "LIMIT" in sql
+
+
+def test_retrieval_filters_can_drop_only_section_title() -> None:
+    filters = RetrievalFilters(
+        source_file="Apple_10k.pdf",
+        company="Apple",
+        year=2024,
+        page_start=1,
+        page_end=10,
+        section_title="Risk Factors",
+    )
+
+    relaxed = filters.without_section_title()
+
+    assert relaxed.source_file == "Apple_10k.pdf"
+    assert relaxed.company == "Apple"
+    assert relaxed.year == 2024
+    assert relaxed.page_start == 1
+    assert relaxed.page_end == 10
+    assert relaxed.section_title is None
 
 
 def test_retrieve_endpoint_response_shape(monkeypatch) -> None:

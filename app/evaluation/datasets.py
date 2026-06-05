@@ -130,7 +130,7 @@ class EvaluationDatasetBuilder:
                 EvaluationExample(
                     question=questions[0],
                     ground_truth=chunk.summary or chunk.content,
-                    contexts=contexts or [chunk.content],
+                    contexts=contexts,
                     answer=answer,
                     metadata={
                         "source": "synthetic_question",

@@ -1,60 +1,60 @@
 {
   "average_scores": {
-    "faithfulness": 0.0,
-    "answer_relevancy": 0.0,
-    "context_precision": 0.0,
-    "context_recall": 0.0
+    "faithfulness": 0.3764,
+    "answer_relevancy": 0.1701,
+    "context_precision": 0.5333,
+    "context_recall": 0.3083
   },
   "worst_questions": [
     {
       "question": "What supply chain or supplier risks does Apple disclose?",
-      "overall": 0.0,
-      "faithfulness": 0.0,
-      "answer_relevancy": 0.0,
-      "context_precision": 0.0,
-      "context_recall": 0.0
+      "overall": 0.2768,
+      "faithfulness": 0.2809,
+      "answer_relevancy": 0.1263,
+      "context_precision": 0.4,
+      "context_recall": 0.3
     },
     {
       "question": "What risks does Amazon describe around fulfillment and logistics capacity?",
-      "overall": 0.0,
-      "faithfulness": 0.0,
-      "answer_relevancy": 0.0,
-      "context_precision": 0.0,
-      "context_recall": 0.0
+      "overall": 0.2925,
+      "faithfulness": 0.3117,
+      "answer_relevancy": 0.1667,
+      "context_precision": 0.4,
+      "context_recall": 0.2917
     },
     {
       "question": "What cloud or datacenter risks does Microsoft disclose?",
-      "overall": 0.0,
-      "faithfulness": 0.0,
-      "answer_relevancy": 0.0,
-      "context_precision": 0.0,
-      "context_recall": 0.0
+      "overall": 0.4718,
+      "faithfulness": 0.5366,
+      "answer_relevancy": 0.2174,
+      "context_precision": 0.8,
+      "context_recall": 0.3333
     }
   ],
   "best_questions": [
     {
       "question": "What cloud or datacenter risks does Microsoft disclose?",
-      "overall": 0.0,
-      "faithfulness": 0.0,
-      "answer_relevancy": 0.0,
-      "context_precision": 0.0,
-      "context_recall": 0.0
+      "overall": 0.4718,
+      "faithfulness": 0.5366,
+      "answer_relevancy": 0.2174,
+      "context_precision": 0.8,
+      "context_recall": 0.3333
     },
     {
       "question": "What risks does Amazon describe around fulfillment and logistics capacity?",
-      "overall": 0.0,
-      "faithfulness": 0.0,
-      "answer_relevancy": 0.0,
-      "context_precision": 0.0,
-      "context_recall": 0.0
+      "overall": 0.2925,
+      "faithfulness": 0.3117,
+      "answer_relevancy": 0.1667,
+      "context_precision": 0.4,
+      "context_recall": 0.2917
     },
     {
       "question": "What supply chain or supplier risks does Apple disclose?",
-      "overall": 0.0,
-      "faithfulness": 0.0,
-      "answer_relevancy": 0.0,
-      "context_precision": 0.0,
-      "context_recall": 0.0
+      "overall": 0.2768,
+      "faithfulness": 0.2809,
+      "answer_relevancy": 0.1263,
+      "context_precision": 0.4,
+      "context_recall": 0.3
     }
   ]
 }

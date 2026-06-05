@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import csv
 import json
 from pathlib import Path
+import sys
 from typing import Any, Optional, Sequence
 from uuid import uuid4
 
@@ -24,6 +25,7 @@ from app.evaluation.metrics import (
 
 REPORT_PATH = Path("evals/reports/ragas_report.csv")
 SUMMARY_PATH = Path("evals/reports/ragas_summary.json")
+DEBUG_DATASET_PATH = Path("evals/reports/ragas_debug_dataset.json")
 
 
 @dataclass(frozen=True)
@@ -58,8 +60,12 @@ class RagasRunner:
         run_id: Optional[str] = None,
         report_path: Path = REPORT_PATH,
         summary_path: Path = SUMMARY_PATH,
+        debug_dataset_path: Path = DEBUG_DATASET_PATH,
     ) -> RagasRunResult:
         active_run_id = run_id or uuid4().hex
+        self.print_debug_examples(examples)
+        self.export_debug_dataset(examples=examples, path=debug_dataset_path)
+        self.validate_examples(examples)
         rows = self._evaluate(examples=examples, run_id=active_run_id)
         aggregate_report = aggregate_scores(rows)
         timestamp = datetime.now(timezone.utc).isoformat()
@@ -138,6 +144,53 @@ class RagasRunner:
             )
 
             return [Faithfulness(), AnswerRelevancy(), ContextPrecision(), ContextRecall()]
+
+    def validate_examples(self, examples: Sequence[EvaluationExample]) -> None:
+        for index, example in enumerate(examples, start=1):
+            prefix = f"RAGAS evaluation row {index}"
+            if not example.answer or not example.answer.strip():
+                raise ValueError(f"{prefix} has an empty answer.")
+            if not example.ground_truth or not example.ground_truth.strip():
+                raise ValueError(f"{prefix} has an empty ground_truth.")
+            if not isinstance(example.contexts, list):
+                raise TypeError(
+                    f"{prefix} contexts must be list[str], got {type(example.contexts).__name__}."
+                )
+            if not example.contexts:
+                raise ValueError(f"{prefix} has empty contexts.")
+            bad_contexts = [
+                position
+                for position, context in enumerate(example.contexts, start=1)
+                if not isinstance(context, str) or not context.strip()
+            ]
+            if bad_contexts:
+                raise TypeError(
+                    f"{prefix} contexts must contain only non-empty strings; "
+                    f"invalid positions: {bad_contexts}."
+                )
+
+    def print_debug_examples(self, examples: Sequence[EvaluationExample]) -> None:
+        for index, example in enumerate(examples, start=1):
+            print(f"\nRAGAS evaluation row {index}")
+            print(f"question: {_safe_console_text(example.question)}")
+            print(f"answer: {_safe_console_text(example.answer)}")
+            print(f"number of contexts: {len(example.contexts)}")
+            for context_index, context in enumerate(example.contexts, start=1):
+                preview = _safe_console_text(context[:300].replace("\n", " "))
+                print(f"context {context_index} first 300 chars: {preview}")
+            print(f"ground_truth: {_safe_console_text(example.ground_truth)}")
+
+    def export_debug_dataset(self, *, examples: Sequence[EvaluationExample], path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = [
+            {
+                **example.to_schema(),
+                "metadata": example.metadata,
+                "context_count": len(example.contexts),
+            }
+            for example in examples
+        ]
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     def persist(self, *, rows: Sequence[EvaluationScoreRow], timestamp: str) -> None:
         if self.session is None:
@@ -237,3 +290,8 @@ class RagasRunner:
                 "END $$;"
             )
         )
+
+
+def _safe_console_text(value: str) -> str:
+    encoding = sys.stdout.encoding or "utf-8"
+    return value.encode(encoding, errors="backslashreplace").decode(encoding)

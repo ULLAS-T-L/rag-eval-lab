@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 from typing import Any
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.agents.router import ReasoningRouter
 from app.db.session import SessionLocal
 from app.evaluation.datasets import EvaluationDatasetBuilder
-from app.evaluation.ragas_runner import REPORT_PATH, SUMMARY_PATH, RagasRunner
+from app.evaluation.ragas_runner import DEBUG_DATASET_PATH, REPORT_PATH, SUMMARY_PATH, RagasRunner
 from app.retrieval.embeddings import PlaceholderEmbeddingProvider
 from app.retrieval.rerankers import NoOpReranker
 
@@ -18,6 +23,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--synthetic-limit", type=int, default=15)
     parser.add_argument("--report-path", type=Path, default=REPORT_PATH)
     parser.add_argument("--summary-path", type=Path, default=SUMMARY_PATH)
+    parser.add_argument("--debug-dataset-path", type=Path, default=DEBUG_DATASET_PATH)
     parser.add_argument("--no-fallback", action="store_true")
     return parser.parse_args()
 
@@ -33,11 +39,11 @@ def main() -> None:
 
         def answer_fn(question: str, filters: dict[str, Any]) -> tuple[str, list[str]]:
             result = router.ask(query=question, top_k=args.top_k, filters=filters)
-            contexts = [
-                chunk.get("text_preview", "")
-                for chunk in result.retrieved_chunks
-                if chunk.get("text_preview")
-            ]
+            contexts: list[str] = []
+            for chunk in result.retrieved_chunks:
+                text_preview = chunk.get("text_preview")
+                if isinstance(text_preview, str) and text_preview.strip():
+                    contexts.append(text_preview)
             return result.answer, contexts
 
         examples = EvaluationDatasetBuilder(session=session, answer_fn=answer_fn).build(
@@ -50,12 +56,14 @@ def main() -> None:
             examples,
             report_path=args.report_path,
             summary_path=args.summary_path,
+            debug_dataset_path=args.debug_dataset_path,
         )
 
     print(f"RAGAS run_id: {run.run_id}")
     print(f"Questions evaluated: {len(run.rows)}")
     print(f"CSV report: {run.report_path}")
     print(f"Aggregate summary: {run.summary_path}")
+    print(f"Debug dataset: {args.debug_dataset_path}")
     print(f"Average scores: {run.aggregate_report.averages}")
 
 

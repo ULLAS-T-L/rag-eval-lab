@@ -200,6 +200,18 @@ python scripts/run_ragas_eval.py
 ```
 
 The RAGAS report is exported to `evals/reports/ragas_report.csv`.
+The runner also prints every evaluation row before scoring and writes the exact dataset sent
+to RAGAS at `evals/reports/ragas_debug_dataset.json`.
+
+If all RAGAS metrics are zero, inspect `evals/reports/ragas_debug_dataset.json` first:
+
+- `answer` must be non-empty and should come from the same answer pipeline as `/query/ask`.
+- `contexts` must be a non-empty JSON array of strings, not a JSON-encoded string and not a list of chunk dictionaries.
+- `ground_truth` must be non-empty, especially for context recall.
+- The printed context previews should contain evidence relevant to the question; empty or unrelated previews usually mean retrieval filters are too narrow, ingestion metadata is missing, or no chunks were retrieved.
+
+The runner now fails before scoring if any row has an empty answer, empty contexts, empty
+ground truth, or contexts that are not `list[str]`.
 
 Every `/query/ask` call now creates a TruLens trace run id and stores it in `answer_logs.trulens_run_id`. Trace metadata is also stored in `answer_logs.answer_metadata["trulens"]`, including:
 
