@@ -19,6 +19,7 @@ class QueryPlanner:
     COMPANIES = {
         "apple": "Apple",
         "amazon": "Amazon",
+        "kirkland": "Kirkland",
         "microsoft": "Microsoft",
     }
 

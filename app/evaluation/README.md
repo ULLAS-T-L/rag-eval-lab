@@ -28,7 +28,7 @@ ground truth. It also writes the exact score input to
 
 The dataset builder combines:
 
-- Manual benchmark questions for Apple, Amazon, and Microsoft.
+- Manual benchmark questions for Apple, Kirkland, and Microsoft.
 - Synthetic questions stored on ingested chunks in `chunks.synthetic_questions`.
 
 Manual benchmarks define expected `ground_truth` answers and metadata filters. Synthetic

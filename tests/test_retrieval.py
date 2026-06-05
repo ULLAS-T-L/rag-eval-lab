@@ -281,6 +281,14 @@ def test_planner_infers_company_filter() -> None:
     assert plan.filters["source_file"] == "Apple_10k.pdf"
 
 
+def test_planner_infers_kirkland_filter() -> None:
+    plan = QueryPlanner().plan("What logistics risks did Kirkland mention?", filters={})
+
+    assert plan.retrieval_strategy == "metadata_then_vector"
+    assert plan.filters["company"] == "Kirkland"
+    assert plan.filters["source_file"] == "Kirkland_10k.pdf"
+
+
 def test_vector_only_retrieval_plan_when_no_filters() -> None:
     plan = QueryPlanner().plan("Describe revenue growth patterns", filters={})
 

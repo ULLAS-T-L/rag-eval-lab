@@ -1,4 +1,4 @@
 run_id,question,faithfulness,answer_relevancy,context_precision,context_recall,timestamp
-e05523672d264c6e9fd56a3b001e2ca2,What supply chain or supplier risks does Apple disclose?,0.2809,0.1263,0.4,0.3,2026-06-05T02:46:03.116146+00:00
-e05523672d264c6e9fd56a3b001e2ca2,What risks does Amazon describe around fulfillment and logistics capacity?,0.3117,0.1667,0.4,0.2917,2026-06-05T02:46:03.116146+00:00
-e05523672d264c6e9fd56a3b001e2ca2,What cloud or datacenter risks does Microsoft disclose?,0.5366,0.2174,0.8,0.3333,2026-06-05T02:46:03.116146+00:00
+c76f7d3bfcda4267b83b1a07a8178b9a,What supply chain or supplier risks does Apple disclose?,0.2809,0.1263,0.4,0.3,2026-06-05T18:00:02.455865+00:00
+c76f7d3bfcda4267b83b1a07a8178b9a,What risks does Kirkland describe around fulfillment and logistics capacity?,0.3548,0.2029,0.2,0.6,2026-06-05T18:00:02.455865+00:00
+c76f7d3bfcda4267b83b1a07a8178b9a,What cloud or datacenter risks does Microsoft disclose?,0.5366,0.2174,0.8,0.3333,2026-06-05T18:00:02.455865+00:00

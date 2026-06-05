@@ -44,13 +44,13 @@ MANUAL_BENCHMARK_QUESTIONS: tuple[BenchmarkQuestion, ...] = (
         filters={"company": "Apple", "source_file": "Apple_10k.pdf"},
     ),
     BenchmarkQuestion(
-        question="What risks does Amazon describe around fulfillment and logistics capacity?",
+        question="What risks does Kirkland describe around fulfillment and logistics capacity?",
         ground_truth=(
-            "Amazon describes risks from fulfillment network constraints, transportation and "
-            "logistics disruptions, rising operating costs, inventory management, and dependence "
-            "on third parties that may affect delivery speed and customer experience."
+            "Kirkland describes risks from supply chain disruption, fulfillment capacity, "
+            "inventory planning, distribution and logistics constraints, third-party carriers, "
+            "rising costs, and e-commerce order fulfillment failures."
         ),
-        filters={"company": "Amazon", "source_file": "Amazon_10k.pdf"},
+        filters={"company": "Kirkland", "source_file": "Kirkland_10k.pdf"},
     ),
     BenchmarkQuestion(
         question="What cloud or datacenter risks does Microsoft disclose?",

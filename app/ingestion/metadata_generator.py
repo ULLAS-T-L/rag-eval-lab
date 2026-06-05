@@ -104,6 +104,7 @@ def infer_document_metadata_from_filename(source_file: str) -> dict[str, Any]:
         "apple": "Apple",
         "microsoft": "Microsoft",
         "amazon": "Amazon",
+        "kirkland": "Kirkland",
     }
     company = next((value for key, value in company_map.items() if key in filename), None)
     year_match = re.search(r"\b(20\d{2})\b", filename)

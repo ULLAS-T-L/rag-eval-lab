@@ -27,7 +27,7 @@ def test_manual_benchmark_dataset_uses_required_schema() -> None:
     assert len(examples) == 3
     assert {example.metadata["filters"]["company"] for example in examples} == {
         "Apple",
-        "Amazon",
+        "Kirkland",
         "Microsoft",
     }
 
@@ -35,7 +35,7 @@ def test_manual_benchmark_dataset_uses_required_schema() -> None:
 def test_manual_benchmarks_cover_required_companies() -> None:
     companies = {benchmark.filters["company"] for benchmark in MANUAL_BENCHMARK_QUESTIONS}
 
-    assert companies == {"Apple", "Amazon", "Microsoft"}
+    assert companies == {"Apple", "Kirkland", "Microsoft"}
 
 
 def test_aggregate_report_contains_average_best_and_worst_questions() -> None:
